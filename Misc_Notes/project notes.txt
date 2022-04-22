@@ -1,0 +1,29 @@
+Data Architecture
+
+
+Data In CSVs
+
+Will upload into PGAdmin and make sure relational
+
+Then migrate from there into AWS RDS
+
+Then will use boto3 to pull data // transform on local pc
+
+Upload back to aws s3 bucket using boto3
+
+Lambda function will be set in order to see when s3 bucket is updated to then
+transfer the data from s3 into redshift
+
+unit testing: check if we have actual conneciton, if transformations went through\
+
+audit - trusted advisor and aws inspector - also helps with cost management
+
+first time connection: snow/snowmobile etc, direct connect - abilities of the cloud 
+while staying on prem
+
+need info in 1 space, code snippets, screen shots of the service in order to implement that code
+
+why your reccomending certain applications over others
+competitive landscape/pricing
+
+if they ask about azure/google - from my competitive landscape studies

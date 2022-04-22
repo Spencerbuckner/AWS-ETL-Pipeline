@@ -1,0 +1,37 @@
+import sys
+from awsglue.transforms import *
+from awsglue.utils import getResolvedOptions
+from pyspark.context import SparkContext
+from awsglue.context import GlueContext
+from awsglue.job import Job
+  
+sc = SparkContext.getOrCreate()
+glueContext = GlueContext(sc)
+spark = glueContext.spark_session
+job = Job(glueContext)
+### Importing tables from Data Catalog
+customer_df = glueContext.create_data_frame.from_catalog(database="raw-data-db", table_name="customer")
+order_items_df = glueContext.create_data_frame.from_catalog(database="raw-data-db", table_name="order_items")
+order_payments_df = glueContext.create_data_frame.from_catalog(database="raw-data-db", table_name="order_payments")
+orders_df = glueContext.create_data_frame.from_catalog(database="raw-data-db", table_name="orders")
+products_df = glueContext.create_data_frame.from_catalog(database="raw-data-db", table_name="products")
+### Dropping Nulls Rows
+customer_df_drop = customer_df.na.drop()
+order_items_drop = order_items_df.na.drop()
+order_payments_drop = order_payments_df.na.drop()
+orders_drop = orders_df.na.drop()
+products_drop = products_df.na.drop()
+from awsglue.dynamicframe import DynamicFrame
+### Changing type from DF to Dynamic Frame for upload
+customer_df_dynamic = DynamicFrame.fromDF(customer_df_drop, glueContext, "test_customer")
+order_items_df_dynamic = DynamicFrame.fromDF(order_items_drop, glueContext, "test_order_items")
+order_payments_df_dynamic = DynamicFrame.fromDF(order_payments_drop, glueContext, "test_order_payments")
+orders_df_dynamic = DynamicFrame.fromDF(orders_drop, glueContext, "test_orders_df")
+products_df_dynamic = DynamicFrame.fromDF(products_drop, glueContext, "test_products")
+### Uploading Dynamic Frames to new S3 Bucket
+glueContext.write_dynamic_frame.from_options(customer_df_dynamic,connection_type="s3",connection_options={"path":"s3://cleaned-data-bucket-sjb/customer"}, format='csv')
+glueContext.write_dynamic_frame.from_options(order_items_df_dynamic,connection_type="s3",connection_options={"path":"s3://cleaned-data-bucket-sjb/order_items"}, format='csv')
+glueContext.write_dynamic_frame.from_options(order_payments_df_dynamic,connection_type="s3",connection_options={"path":"s3://cleaned-data-bucket-sjb/order_payments"}, format='csv')
+glueContext.write_dynamic_frame.from_options(orders_df_dynamic,connection_type="s3",connection_options={"path":"s3://cleaned-data-bucket-sjb/orders"}, format='csv')
+glueContext.write_dynamic_frame.from_options(products_df_dynamic,connection_type="s3",connection_options={"path":"s3://cleaned-data-bucket-sjb/products"}, format='csv')
+job.commit()

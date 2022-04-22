@@ -1,0 +1,47 @@
+-- Who are the top 10 customers in payment_value and what are their preferred method of payment?
+SELECT O.CUSTOMER_ID,
+	P.PRODUCT_ID,
+	OP.PAYMENT_TYPE,
+	OP.PAYMENT_VALUE::numeric::MONEY
+FROM ORDERS O
+JOIN ORDER_ITEMS OI USING(ORDER_ID)
+JOIN PRODUCTS P ON OI.PRODUCT_ID = P.PRODUCT_ID
+JOIN ORDER_PAYMENTS OP USING(ORDER_ID)
+ORDER BY 4 DESC
+LIMIT 10
+
+-- What is the total sales by payment type and and average sale for each?
+SELECT OP.PAYMENT_TYPE,
+	SUM(OP.PAYMENT_VALUE)::numeric::MONEY AS TOTAL_SALES,
+	AVG(OP.PAYMENT_VALUE)::numeric::MONEY AS AVG_SALES
+FROM ORDERS O
+JOIN ORDER_PAYMENTS OP USING(ORDER_ID)
+GROUP BY 1
+ORDER BY 2 DESC
+
+-- What categories pull in the most money?
+SELECT RANK() OVER (ORDER BY SUM(OP.PAYMENT_VALUE) DESC), P.PRODUCT_CATEGORY_NAME,
+	SUM(OP.PAYMENT_VALUE)::numeric::MONEY AS TOTAL_SALES
+FROM ORDERS O
+JOIN ORDER_PAYMENTS OP USING(ORDER_ID)
+JOIN ORDER_ITEMS OI USING(ORDER_ID)
+JOIN PRODUCTS P ON OI.PRODUCT_ID = P.PRODUCT_ID
+GROUP BY 2
+ORDER BY TOTAL_SALES DESC
+
+
+-- How many customers are there by city?
+SELECT C.CUSTOMER_CITY,
+	COUNT(*)
+FROM CUSTOMERS C
+GROUP BY 1
+ORDER BY 2 DESC
+
+-- Moving the data from local database into flat csv files. In a business setting you 
+-- would use aws data migration service or some type of snowflake/snowmobile etc or direct connect if not full migration
+
+copy "public".customers to 'C:\Users\Spencer\Desktop\data_test\customer_test.csv' delimiter ',' csv header
+copy "public".order_items to 'C:\Users\Spencer\Desktop\data_test\order_items_test.csv' delimiter ',' csv header
+copy "public".order_payments to 'C:\Users\Spencer\Desktop\data_test\order_payments_test.csv' delimiter ',' csv header
+copy "public".orders to 'C:\Users\Spencer\Desktop\data_test\orders_test.csv' delimiter ',' csv header
+copy "public".products to 'C:\Users\Spencer\Desktop\data_test\products_test.csv' delimiter ',' csv header

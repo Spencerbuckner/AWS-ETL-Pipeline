@@ -1,0 +1,38 @@
+import sys
+from awsglue.transforms import *
+from awsglue.utils import getResolvedOptions
+from pyspark.context import SparkContext
+from awsglue.context import GlueContext
+from awsglue.job import Job
+import pyspark.sql.functions as func
+from awsglue.dynamicframe import DynamicFrame
+  
+sc = SparkContext.getOrCreate()
+glueContext = GlueContext(sc)
+spark = glueContext.spark_session
+job = Job(glueContext)
+### Import tables from Data Catalog
+customer_df = glueContext.create_data_frame.from_catalog(database="cleaned-data-db", table_name="customer")
+order_items_df = glueContext.create_data_frame.from_catalog(database="cleaned-data-db", table_name="order_items")
+order_payments_df = glueContext.create_data_frame.from_catalog(database="cleaned-data-db", table_name="order_payments")
+orders_df = glueContext.create_data_frame.from_catalog(database="cleaned-data-db", table_name="orders")
+products_df = glueContext.create_data_frame.from_catalog(database="cleaned-data-db", table_name="products")
+### Transform Tables
+customer_df_transformed = customer_df.select(['customer_id', 'customer_unique_id', 'customer_city', 'customer_state'])
+order_items_transformed = order_items_df.select(['order_id', 'product_id', 'seller_id', 'shipping_limit_date', 'price', 'freight_value']).withColumn('total_price', func.round(order_items_df['price'] + order_items_df['freight_value'],2))
+order_payments_transformed = order_payments_df.select(['order_id', 'payment_type', 'payment_installments', 'payment_value'])
+orders_transformed = orders_df.select(['order_id', 'customer_id', 'order_status', 'order_purchase_timestamp', 'order_estimated_delivery_date', 'order_delivered_customer_date', 'shipping_number'])
+products_transformed = products_df.select(['product_id', 'product_category_name', 'product_name_lenght', 'product_description_lenght', 'product_weight_g']).withColumnRenamed('product_name_lenght', 'product_name_length').withColumnRenamed('product_description_lenght', 'product_description_length')
+### Change tables from DF to Dynamic Frame
+customer_df_dynamic = DynamicFrame.fromDF(customer_df_transformed, glueContext, "test_customer")
+order_items_df_dynamic = DynamicFrame.fromDF(order_items_transformed, glueContext, "test_order_items")
+order_payments_df_dynamic = DynamicFrame.fromDF(order_payments_transformed, glueContext, "test_order_payments")
+orders_df_dynamic = DynamicFrame.fromDF(orders_transformed, glueContext, "test_orders_df")
+products_df_dynamic = DynamicFrame.fromDF(products_transformed, glueContext, "test_products")
+### Uploading to Transformed Bucket
+glueContext.write_dynamic_frame.from_options(customer_df_dynamic,connection_type="s3",connection_options={"path":"s3://transformed-data-sjb/customer"}, format='csv')
+glueContext.write_dynamic_frame.from_options(order_items_df_dynamic,connection_type="s3",connection_options={"path":"s3://transformed-data-sjb/order_items"}, format='csv')
+glueContext.write_dynamic_frame.from_options(order_payments_df_dynamic,connection_type="s3",connection_options={"path":"s3://transformed-data-sjb/order_payments"}, format='csv')
+glueContext.write_dynamic_frame.from_options(orders_df_dynamic,connection_type="s3",connection_options={"path":"s3://transformed-data-sjb/orders"}, format='csv')
+glueContext.write_dynamic_frame.from_options(products_df_dynamic,connection_type="s3",connection_options={"path":"s3://transformed-data-sjb/products"}, format='csv')
+job.commit()
