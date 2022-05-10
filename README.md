@@ -28,9 +28,9 @@ First, I will detail the S3 buckets. There are 6 of them and they all have a spe
 
 Next, I will talk about what one phase in this process consists of and the goals surrounding this method. Just to be clear, when I am talking about phases, I am referring to how data goes from S3 Raw > Cleaned and then from Cleaned > Transformed and then finally from Transformed > Redshift Warehouse.
 
-When objects lands in the Raw Data bucket, the first thing that is triggered is a Lambda function that notifies the glue Data Crawler to turn on and crawl the data within the Raw Data bucket. Once that crawler finishes, and EventBridge notification is created which is the trigger for another lambda function to start the first glue job. This first glue job is mean to clean the data, and then deposit each table into their respective folder (Orders data is sent to the Orders folder in the Cleaned Data Bucket etc..). This process is relatively simple and gets to the point with moving and transforming data.
+When objects lands in the Raw Data bucket, the first thing that is triggered is a Lambda function that notifies the glue Data Crawler to turn on and crawl the data within the Raw Data bucket. Once that crawler finishes, and EventBridge notification is created which is the trigger for another lambda function to start the first glue job. This first glue job is to clean the data, and then deposit each table into their respective folder (Orders data is sent to the Orders folder in the Cleaned Data Bucket etc..). This process is relatively simple and gets to the point with moving and transforming data.
 
-This process is extremely similar for the other 2 phases with a few changes. Since the data is now cleaned, the next glue job only transforms the data, with the final glue job only moving the data from the final Data Crawler into the tables we created within Redshift.
+This process is extremely similar for the other 2 phases with a few changes. Since the data is now cleaned, the next glue job only transforms the data, with the final glue job only moving the data from the final Data Crawler into the tables we created within Redshift. All tables are insert only except the products table which is update and insert only due to the uniqueness of one product not needing to be replicated.
 
 ### Error Handling
 
