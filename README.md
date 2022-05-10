@@ -12,7 +12,7 @@ There are currently 5 tables in 3NF with orders containing the most important da
 
 ### Architecture for ETL Job in AWS
 
-The following is the general Architecture for my plan on moving the data from an on prem database into. All code for this project is available within this Github.
+The following is the general Architecture for my plan on moving the data from an on prem database into. All code for this project is available within this repo. Everything else is within my AWS account, if you have any questions feel free to reach out to me.
 
 Disclaimer: In order to keep costs down as much as possible (I paid for this out of pocket), I tended to move towards free tier or low-cost path options, that is not to say that this is the most efficient way or would be the only way to do so in production, but this worked for me on this project.
 
